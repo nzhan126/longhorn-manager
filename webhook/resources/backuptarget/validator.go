@@ -150,24 +150,31 @@ func (b *backupTargetValidator) validateCredentialSecret(secretName string) erro
 		types.NOProxy,
 		types.VirtualHostedStyle,
 	}
+
+	multiErr := util.NewMultiError()
 	for _, checkKey := range checkKeyList {
 		if value, ok := secret.Data[checkKey]; ok {
 			if strings.TrimSpace(string(value)) != string(value) {
 				//ref: longhorn/longhorn#7159: appropriate warning messages for credential data
 				switch {
 				case strings.TrimLeft(string(value), " ") != string(value):
-					return fmt.Errorf("invalid leading white space in %s", checkKey)
+					multiErr[fmt.Sprintf("invalid leading white space in %s", checkKey)] = struct{}{}
 				case strings.TrimRight(string(value), " ") != string(value):
-					return fmt.Errorf("invalid trailing white space in %s", checkKey)
+					multiErr[fmt.Sprintf("invalid trailing white space in %s", checkKey)] = struct{}{}
 				case strings.TrimLeft(string(value), "\n") != string(value):
-					return fmt.Errorf("invalid leading new line in %s", checkKey)
+					multiErr[fmt.Sprintf("invalid leading new line in %s", checkKey)] = struct{}{}
 				case strings.TrimRight(string(value), "\n") != string(value):
-					return fmt.Errorf("invalid trailing new line in %s", checkKey)
+					multiErr[fmt.Sprintf("invalid trailing new line in %s", checkKey)] = struct{}{}
 				}
-				return fmt.Errorf("there is space or new line in %s", checkKey)
+				multiErr[fmt.Sprintf("there is space or new line in %s", checkKey)] = struct{}{}
 			}
 		}
 	}
+
+	if len(multiErr) > 0 {
+		return fmt.Errorf("credential validation error(s): %s", multiErr.Join())
+	}
+
 	return nil
 }
 
