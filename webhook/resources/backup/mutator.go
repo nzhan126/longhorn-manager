@@ -62,7 +62,7 @@ func (b *backupMutator) Create(request *admission.Request, newObj runtime.Object
 
 	volumeName, isExist := backup.Labels[types.LonghornLabelBackupVolume]
 	if !isExist {
-		err := errors.Wrapf(err, "cannot find the backup volume label for backup %v", backup.Name)
+		err := fmt.Errorf("cannot find the backup volume label for backup %v", backup.Name)
 		return nil, werror.NewInvalidError(err.Error(), "")
 	}
 

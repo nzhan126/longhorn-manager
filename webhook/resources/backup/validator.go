@@ -53,10 +53,7 @@ func (b *backupValidator) Create(request *admission.Request, newObj runtime.Obje
 	}
 
 	// Check if backup target exists and is available
-	backupTargetName, ok := backup.Labels[types.LonghornLabelBackupTarget]
-	if !ok || backupTargetName == "" {
-		return werror.NewInvalidError("missing backup target label on backup object", "")
-	}
+	backupTargetName := backup.Labels[types.LonghornLabelBackupTarget]
 
 	backupTarget, err := b.ds.GetBackupTarget(backupTargetName)
 	if err != nil {
