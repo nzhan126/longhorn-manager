@@ -64,5 +64,22 @@ func (b *backupValidator) Create(request *admission.Request, newObj runtime.Obje
 		return werror.NewInvalidError(fmt.Sprintf("backup target %s is not available", backupTargetName), "")
 	}
 
+	//check if label volume name matches snapshot volume name
+	volumeName := backup.Labels[types.LonghornLabelBackupVolume]
+	snapshotName := backup.Spec.SnapshotName
+	snapshot, _ := b.ds.GetSnapshot(backup.Spec.SnapshotName)
+	volume, _ := b.ds.GetVolume(snapshot.Spec.Volume)
+	snapshotVolumeName := volume.Name
+
+	if volumeName != snapshotVolumeName {
+		return werror.NewInvalidError(fmt.Sprintf("snapshot %s and volume %s does not match", snapshotName, volumeName), "")
+	}
+
+	//check if volume backup target matches labelbackup target
+	volumeBackupTargetName := volume.Spec.BackupTargetName
+	if volumeBackupTargetName != backupTargetName {
+		return werror.NewInvalidError(fmt.Sprintf("volume backup target %s and label backup target %s does not match", volumeBackupTargetName, backupTargetName), "")
+	}
+
 	return nil
 }
